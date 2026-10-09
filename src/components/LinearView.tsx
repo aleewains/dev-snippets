@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Snippet, SnippetCategory } from '../types/snippet';
-import { Copy, Check, Star, Edit3, Trash2, Search, Plus, RotateCcw, Box, GitBranch, Terminal, Shield, Database, Code, Sliders, Tag } from 'lucide-react';
+import { Copy, Check, Star, Edit3, Trash2, Search, Plus, RotateCcw, Box, GitBranch, Terminal, Shield, Database, Code, Sliders, Tag, Download } from 'lucide-react';
 
 interface LinearViewProps {
   snippets: Snippet[];
@@ -22,6 +22,7 @@ interface LinearViewProps {
   onSelectCategory: (cat: SnippetCategory) => void;
   onlyPinned: boolean;
   onTogglePinned: () => void;
+  onExport?: () => void;
 }
 
 export const LinearView: React.FC<LinearViewProps> = ({
@@ -43,6 +44,7 @@ export const LinearView: React.FC<LinearViewProps> = ({
   onSelectCategory,
   onlyPinned,
   onTogglePinned,
+  onExport,
 }) => {
   const [copied, setCopied] = useState(false);
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
@@ -153,10 +155,23 @@ export const LinearView: React.FC<LinearViewProps> = ({
             type="button"
             className="linear-btn-ghost"
             onClick={onResetDefaults}
-            title="Reset vault to default starter snippets"
+            data-tooltip-pos="bottom"
+            data-tooltip="Reset vault to default starter snippets"
           >
             <RotateCcw size={14} />
           </button>
+
+          {onExport && (
+            <button
+              type="button"
+              className="linear-btn-ghost"
+              onClick={onExport}
+              data-tooltip-pos="bottom"
+              data-tooltip="Export vault backup to JSON"
+            >
+              <Download size={14} />
+            </button>
+          )}
         </div>
       </div>
 
