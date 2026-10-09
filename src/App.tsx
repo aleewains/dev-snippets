@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Snippet, SnippetCategory } from './types/snippet';
+import { Snippet, SnippetCategory, ViewMode } from './types/snippet';
 import { loadSnippets, saveSnippets, resetToDefaults } from './utils/storage';
 import { filterAndScoreSnippets } from './utils/fuzzySearch';
-import { CommandPaletteHeader } from './components/CommandPaletteHeader';
-import { SnippetList } from './components/SnippetList';
-import { SnippetPreview } from './components/SnippetPreview';
-import { FooterShortcuts } from './components/FooterShortcuts';
+import { TuiView } from './components/TuiView';
+import { LinearView } from './components/LinearView';
 import { SnippetModal } from './components/SnippetModal';
-import { Terminal, Check } from 'lucide-react';
+import { GlobalTooltip } from './components/GlobalTooltip';
+import { Terminal, Check, LayoutGrid, Sun, Moon } from 'lucide-react';
 
 export function App() {
   const [snippets, setSnippets] = useState<Snippet[]>(loadSnippets);
@@ -16,11 +15,29 @@ export function App() {
   const [onlyPinned, setOnlyPinned] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  // View Mode: 'tui' (Zed/Helix Terminal) or 'linear' (Linear Precision 3-Pane)
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem('commandvault_view_mode');
+    return saved === 'linear' || saved === 'tui' ? saved : 'tui';
+  });
+
+  // Theme: 'dark' | 'light'
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('commandvault_theme');
+    return saved === 'light' || saved === 'dark' ? saved : 'dark';
+  });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [snippetToEdit, setSnippetToEdit] = useState<Snippet | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Sync theme with document root attribute
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('commandvault_theme', theme);
+  }, [theme]);
 
   // Compute filtered & ranked snippets
   const filteredSnippets = useMemo(() => {
@@ -41,9 +58,26 @@ export function App() {
     setTimeout(() => setToastMessage(null), 2500);
   };
 
+  const handleToggleViewMode = useCallback((mode?: ViewMode) => {
+    setViewMode((prev) => {
+      const next = mode ?? (prev === 'tui' ? 'linear' : 'tui');
+      localStorage.setItem('commandvault_view_mode', next);
+      showToast(`Switched to ${next === 'tui' ? 'Zed / Helix TUI' : 'Linear Precision'} workspace`);
+      return next;
+    });
+  }, []);
+
+  const handleToggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      showToast(`Switched to ${next === 'light' ? 'Light' : 'Dark'} theme`);
+      return next;
+    });
+  }, []);
+
   const handleCopyCommand = useCallback((cmdString: string) => {
     navigator.clipboard.writeText(cmdString);
-    showToast(`Copied to clipboard: ${cmdString}`);
+    showToast(`Copied: ${cmdString.slice(0, 48)}${cmdString.length > 48 ? '...' : ''}`);
   }, []);
 
   const handleTogglePin = useCallback((id: string) => {
@@ -98,20 +132,34 @@ export function App() {
     showToast('Reset vault to default cheatsheet recipes');
   };
 
-  // Keyboard navigation & Raycast hotkeys
+  // Keyboard navigation & hotkeys
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // 1. Focus Search: Cmd+K or Ctrl+K or '/'
+      // 1. Focus Search: Cmd+K or Ctrl+K
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         searchInputRef.current?.focus();
         return;
       }
 
-      // If typing in an input/textarea inside the modal, don't hijack keys
+      // 2. Toggle View Mode: Cmd+M or Ctrl+M
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'm') {
+        e.preventDefault();
+        handleToggleViewMode();
+        return;
+      }
+
+      // 3. Toggle Theme: Cmd+T or Ctrl+T
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        handleToggleTheme();
+        return;
+      }
+
+      // If typing inside the modal, don't hijack keys
       if (isModalOpen) return;
 
-      // 2. New Snippet: Cmd+N or Ctrl+N
+      // 4. New Snippet: Cmd+N or Ctrl+N
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
         e.preventDefault();
         setSnippetToEdit(null);
@@ -119,7 +167,7 @@ export function App() {
         return;
       }
 
-      // 3. Favorite / Pin: Cmd+P or Ctrl+P
+      // 5. Favorite / Pin: Cmd+P or Ctrl+P
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p') {
         e.preventDefault();
         if (activeSnippet) {
@@ -128,31 +176,30 @@ export function App() {
         return;
       }
 
-      // 4. Arrow Down
+      // 6. Arrow Down
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setSelectedIndex((prev) => Math.min(prev + 1, filteredSnippets.length - 1));
         return;
       }
 
-      // 5. Arrow Up
+      // 7. Arrow Up
       if (e.key === 'ArrowUp') {
         e.preventDefault();
         setSelectedIndex((prev) => Math.max(prev - 1, 0));
         return;
       }
 
-      // 6. Enter -> Copy command
+      // 8. Enter -> Copy active command
       if (e.key === 'Enter') {
-        // Only if search input isn't active or if user hit Enter to trigger copy
-        if (activeSnippet) {
+        if (activeSnippet && document.activeElement !== searchInputRef.current) {
           e.preventDefault();
           handleCopyCommand(activeSnippet.command);
         }
         return;
       }
 
-      // 7. Escape -> Clear search
+      // 9. Escape -> Clear search
       if (e.key === 'Escape') {
         if (searchQuery) {
           e.preventDefault();
@@ -170,91 +217,134 @@ export function App() {
     searchQuery,
     handleCopyCommand,
     handleTogglePin,
+    handleToggleViewMode,
+    handleToggleTheme,
   ]);
 
   return (
     <div className="app-layout">
-      {/* Masthead */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <div
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              backgroundColor: 'rgba(56, 189, 248, 0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#38bdf8',
-            }}
-          >
-            <Terminal size={18} />
+      {/* Top Masthead with Brand, Mode Switcher, and Theme Toggle */}
+      <header className="app-masthead">
+        <div className="masthead-brand">
+          <div className="masthead-icon">
+            <Terminal size={17} />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#ffffff' }}>
+            <h1 className="masthead-title">
               CommandVault
             </h1>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Keyboard-first developer cheatsheet & snippet organizer
+            <p className="masthead-subtitle">
+              Developer Snippet & Command Cheat Sheet
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Quick Search: <kbd>⌘</kbd> <kbd>K</kbd>
-          </span>
+        {/* View Mode & Theme Controls */}
+        <div className="masthead-controls">
+          {/* Mode Switcher */}
+          <div className="mode-switcher" role="tablist" aria-label="Layout view switcher">
+            <button
+              type="button"
+              className={`mode-btn ${viewMode === 'tui' ? 'active' : ''}`}
+              onClick={() => handleToggleViewMode('tui')}
+              role="tab"
+              aria-selected={viewMode === 'tui'}
+              data-tooltip-pos="bottom"
+              data-tooltip="Zed / Helix Terminal TUI (⌘M)"
+            >
+              <Terminal size={13} />
+              <span>1. Zed TUI</span>
+            </button>
+            <button
+              type="button"
+              className={`mode-btn ${viewMode === 'linear' ? 'active' : ''}`}
+              onClick={() => handleToggleViewMode('linear')}
+              role="tab"
+              aria-selected={viewMode === 'linear'}
+              data-tooltip-pos="bottom"
+              data-tooltip="Linear Precision 3-Pane (⌘M)"
+            >
+              <LayoutGrid size={13} />
+              <span>2. Linear 3-Pane</span>
+            </button>
+          </div>
+
+          {/* Theme Toggle Button */}
+          <button
+            type="button"
+            className="theme-toggle-btn"
+            onClick={handleToggleTheme}
+            data-tooltip-pos="bottom"
+            data-tooltip={theme === 'dark' ? 'Switch to Light theme (⌘T)' : 'Switch to Dark theme (⌘T)'}
+            aria-label="Toggle color theme"
+          >
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
         </div>
-      </div>
+      </header>
 
-      {/* Palette Window */}
-      <main className="palette-window">
-        {/* Top Search & Filter Bar */}
-        <CommandPaletteHeader
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          activeCategory={activeCategory}
-          onSelectCategory={setActiveCategory}
-          onlyPinned={onlyPinned}
-          onTogglePinned={() => setOnlyPinned((prev) => !prev)}
-          inputRef={searchInputRef}
-          totalCount={filteredSnippets.length}
-        />
-
-        {/* Split View Body */}
-        <div className="palette-body">
-          <SnippetList
+      {/* Main View Area (Zed TUI vs Linear Precision 3-Pane) */}
+      <main>
+        {viewMode === 'tui' ? (
+          <TuiView
             snippets={filteredSnippets}
+            totalSnippetsCount={snippets.length}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
             selectedIndex={selectedIndex}
             onSelectIndex={setSelectedIndex}
-            onCopySnippet={(s) => handleCopyCommand(s.command)}
-          />
-
-          <SnippetPreview
-            snippet={activeSnippet}
-            onCopy={handleCopyCommand}
+            activeSnippet={activeSnippet}
+            onCopyCommand={handleCopyCommand}
             onTogglePin={handleTogglePin}
             onEdit={(s) => {
               setSnippetToEdit(s);
               setIsModalOpen(true);
             }}
             onDelete={handleDeleteSnippet}
+            onCreateNew={() => {
+              setSnippetToEdit(null);
+              setIsModalOpen(true);
+            }}
+            onResetDefaults={handleResetDefaults}
+            searchInputRef={searchInputRef}
+            activeCategory={activeCategory}
+            onSelectCategory={setActiveCategory}
+            onlyPinned={onlyPinned}
+            onTogglePinned={() => setOnlyPinned((prev) => !prev)}
+            pinnedCount={snippets.filter((s) => s.isPinned).length}
           />
-        </div>
-
-        {/* Bottom Keyboard HUD */}
-        <FooterShortcuts
-          onOpenCreateModal={() => {
-            setSnippetToEdit(null);
-            setIsModalOpen(true);
-          }}
-          onResetDefaults={handleResetDefaults}
-          activeCount={filteredSnippets.length}
-        />
+        ) : (
+          <LinearView
+            snippets={filteredSnippets}
+            allSnippets={snippets}
+            totalSnippetsCount={snippets.length}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedIndex={selectedIndex}
+            onSelectIndex={setSelectedIndex}
+            activeSnippet={activeSnippet}
+            onCopyCommand={handleCopyCommand}
+            onTogglePin={handleTogglePin}
+            onEdit={(s) => {
+              setSnippetToEdit(s);
+              setIsModalOpen(true);
+            }}
+            onDelete={handleDeleteSnippet}
+            onCreateNew={() => {
+              setSnippetToEdit(null);
+              setIsModalOpen(true);
+            }}
+            onResetDefaults={handleResetDefaults}
+            searchInputRef={searchInputRef}
+            activeCategory={activeCategory}
+            onSelectCategory={setActiveCategory}
+            onlyPinned={onlyPinned}
+            onTogglePinned={() => setOnlyPinned((prev) => !prev)}
+          />
+        )}
       </main>
 
-      {/* Modal Dialog for Add/Edit */}
+      {/* Add / Edit Snippet Modal Dialog */}
       <SnippetModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -262,11 +352,16 @@ export function App() {
         snippetToEdit={snippetToEdit}
       />
 
-      {/* Tactile Copy Toast */}
+      {/* Global Portal Floating Tooltip (Never clipped by overflow) */}
+      <GlobalTooltip />
+
+      {/* Toast Notification */}
       {toastMessage && (
         <aside className="toast-notice" role="status" aria-live="polite">
-          <Check size={16} style={{ color: '#10b981' }} />
-          <span>{toastMessage}</span>
+          <div className="toast-icon">
+            <Check size={12} strokeWidth={2.5} />
+          </div>
+          <span className="toast-text">{toastMessage}</span>
         </aside>
       )}
     </div>
