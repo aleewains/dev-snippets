@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Snippet, SnippetCategory, ViewMode } from './types/snippet';
-import { loadSnippets, saveSnippets, resetToDefaults } from './utils/storage';
+import { loadSnippets, saveSnippets, resetToDefaults, exportSnippetsToJson } from './utils/storage';
 import { filterAndScoreSnippets } from './utils/fuzzySearch';
 import { TuiView } from './components/TuiView';
 import { LinearView } from './components/LinearView';
@@ -131,6 +131,11 @@ export function App() {
     setSnippets(defaults);
     showToast('Reset vault to default cheatsheet recipes');
   };
+
+  const handleExportSnippets = useCallback(() => {
+    exportSnippetsToJson(snippets);
+    showToast(`Exported ${snippets.length} snippets to JSON`);
+  }, [snippets]);
 
   // Keyboard navigation & hotkeys
   useEffect(() => {
@@ -312,6 +317,7 @@ export function App() {
             onlyPinned={onlyPinned}
             onTogglePinned={() => setOnlyPinned((prev) => !prev)}
             pinnedCount={snippets.filter((s) => s.isPinned).length}
+            onExport={handleExportSnippets}
           />
         ) : (
           <LinearView
@@ -340,6 +346,7 @@ export function App() {
             onSelectCategory={setActiveCategory}
             onlyPinned={onlyPinned}
             onTogglePinned={() => setOnlyPinned((prev) => !prev)}
+            onExport={handleExportSnippets}
           />
         )}
       </main>

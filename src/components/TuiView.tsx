@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Snippet, SnippetCategory } from '../types/snippet';
-import { Copy, Check, Star, Edit3, Trash2, Sliders, Terminal, Plus, RotateCcw } from 'lucide-react';
+import { Copy, Check, Star, Edit3, Trash2, Sliders, Terminal, Plus, RotateCcw, Download } from 'lucide-react';
 
 interface TuiViewProps {
   snippets: Snippet[];
@@ -22,6 +22,7 @@ interface TuiViewProps {
   onlyPinned?: boolean;
   onTogglePinned?: () => void;
   pinnedCount?: number;
+  onExport?: () => void;
 }
 
 export const TuiView: React.FC<TuiViewProps> = ({
@@ -44,6 +45,7 @@ export const TuiView: React.FC<TuiViewProps> = ({
   onlyPinned = false,
   onTogglePinned,
   pinnedCount = 0,
+  onExport,
 }) => {
   const [copied, setCopied] = useState(false);
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
@@ -142,6 +144,18 @@ export const TuiView: React.FC<TuiViewProps> = ({
           >
             <RotateCcw size={12} />
           </button>
+          {onExport && (
+            <button
+              type="button"
+              className="tui-mini-btn"
+              onClick={onExport}
+              data-tooltip-pos="bottom"
+              data-tooltip="Export vault backup to JSON"
+            >
+              <Download size={12} />
+              <span>EXPORT</span>
+            </button>
+          )}
         </div>
       </div>
 

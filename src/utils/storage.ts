@@ -29,3 +29,13 @@ export function resetToDefaults(): Snippet[] {
   saveSnippets(DEFAULT_SNIPPETS);
   return DEFAULT_SNIPPETS;
 }
+
+export function exportSnippetsToJson(snippets: Snippet[]): void {
+  const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(snippets, null, 2));
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute('href', dataStr);
+  downloadAnchor.setAttribute('download', `commandvault-backup-${new Date().toISOString().slice(0, 10)}.json`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+}
