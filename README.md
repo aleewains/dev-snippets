@@ -1,73 +1,79 @@
 # CommandVault — Developer Snippet & Command Cheat Sheet
 
-A keyboard-first, Raycast / Alfred-style developer snippet organizer and command cheat sheet built with **React**, **TypeScript**, and **Vite**.
-
-Designed for engineers who constantly need quick access to Docker cleanup commands, tricky Git undos, Linux process diagnostic one-liners, Kubernetes crash log flags, Regex patterns, and PostgreSQL upserts.
+CommandVault is a keyboard-first, zero-latency developer command cheat sheet and snippet manager built with React 19, TypeScript, and Vite. Designed to eliminate context-switching for engineers who repeatedly search for tricky Git undos, Docker purge commands, Kubernetes log flags, PostgreSQL upserts, and Regex recipes, it delivers instant fuzzy search, live argument placeholder substitution, dual customizable workspaces (Zed Terminal TUI and Linear 3-Pane), and complete Light and Dark theme modes.
 
 ---
 
-## ⚡ Core Features
+## 🚀 How to Run It
 
-* **🎨 Dual Workspaces (TUI vs Linear)**:
-  * **1. Zed / Helix TUI Mode**: Razor-sharp monospaced terminal density, 1px borders, status line with `NORMAL` mode indicator, instant prompt, zero visual fluff.
-  * **2. Linear Precision Mode**: 3-pane ergonomic flow (Categories Sidebar with live counts → Command Stream → Argument Inspector) with warm charcoal darks and tactile parameter chips.
-  * **Toggle Switcher**: Instant top-bar toggle or hotkey <kbd>⌘ + M</kbd> / <kbd>Ctrl + M</kbd> to switch between views anytime. Preferences persist in `localStorage`.
-* **☀️ Complete Light & Dark Themes**:
-  * Developer-grade high-craft light mode (clean paper surfaces, subtle `#e4e4e7` borders, deep ink typography).
-  * Quick toggle in header or hotkey <kbd>⌘ + T</kbd> / <kbd>Ctrl + T</kbd>.
-* **⌨️ Keyboard-First Navigation**:
-  * `↑` / `↓` Arrow keys: Seamlessly cycle through filtered commands.
-  * `↵` Enter: Instantly copy the active command to clipboard.
-  * `⌘ + K` or `Ctrl + K`: Jump focus straight into the search input.
-  * `⌘ + M` or `Ctrl + M`: Toggle workspace view (Zed TUI ↔ Linear 3-Pane).
-  * `⌘ + T` or `Ctrl + T`: Toggle color theme (Dark ↔ Light).
-  * `⌘ + P` or `Ctrl + P`: Toggle favorite / pin on the selected snippet.
-  * `⌘ + N` or `Ctrl + N`: Open the quick snippet creator dialog.
-  * `Esc`: Clear search query or dismiss open modals.
-* **🛡️ Inline Delete Confirmation**:
-  * Micro tooltip-style confirmation bubble attached directly to the trash icon to prevent accidental deletions without annoying alert popups.
-* **🫧 Global Portal Tooltips**:
-  * Zero-clipping floating tooltips rendered at root (`position: fixed`, z-index 999,999) with automatic viewport boundary flipping — never cut off by overflow containers or bars.
-* **📱 Fluid Mobile & Small Viewport Responsiveness**:
-  * Complete vertical document scrolling on smaller heights and mobile devices.
-  * TUI and Linear workspaces stack gracefully with horizontal category swiping, scrollable lists, and fully accessible inspector panes.
-* **🔍 Instant Fuzzy Search**:
-  * Multi-dimensional scoring across command syntax, title, tags, description, and category.
-  * Prioritizes prefix matches, word boundaries, and favorites.
-* **🎛️ Live Parameter Substitution**:
-  * Commands containing placeholders like `<container>`, `<port>`, or `<table>` expose interactive input fields in the preview pane.
-  * Edit the argument, and the copy-ready command dynamically updates in real time!
-* **📖 Markdown Documentation & Flag Cheatsheet**:
-  * Each command provides a split-view detail pane explaining CLI flags, warnings, and next steps.
-* **💾 Persistent Storage**:
-  * All custom snippets, favorites, and edits persist in browser `localStorage`.
-  * Pre-seeded with curated recipes for Docker, Git, Bash, Kubernetes, Regex, and SQL.
-  * One-click "Reset Defaults" restores curated starter snippets anytime.
+Follow these instructions literally from a terminal:
 
----
+### Prerequisites
+* **Node.js**: Version 18.0.0 or higher
+* **npm**: Version 9.0.0 or higher
 
-## 🚀 Quick Start
-
-### Installation & Development
+### Installation & Launch
 ```bash
-# Navigate to project directory
-cd /home/alonejack/.gemini/antigravity/scratch/dev-snippets
+# 1. Clone or navigate to the repository directory
+cd dev-snippets
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Start development server
+# 3. Start local development server
 npm run dev
 ```
 
-Open `http://localhost:5174` in your browser.
+Open `http://localhost:5173` (or the URL printed in your terminal) in any modern browser.
+
+### Verification & Production Build
+```bash
+# Run TypeScript type check
+npx tsc --noEmit
+
+# Compile production bundle
+npm run build
+```
+A successful build outputs compiled chunks in `dist/` and exits with code `0`.
 
 ---
 
-## 🛠️ Tech Stack
-* **Framework**: React 19 + TypeScript
-* **Build Tool**: Vite 8
-* **Styling**: Sleek Raycast/Linear titanium dark UI with tactile `<kbd>` badges
-* **Icons**: Lucide React
-* **Persistence**: LocalStorage with auto-seeding
+## 🔑 Environment Variables
 
+**No environment variables are required.**
+
+| Variable | Purpose | Default | Required? | Behavior Without It |
+| :--- | :--- | :--- | :--- | :--- |
+| *None* | N/A | N/A | No | The application runs completely in-browser without third-party API keys, tokens, or backend secrets. |
+
+**Rationale**: CommandVault is deliberately engineered as a self-contained, privacy-first client application. Snippets, preferences, and favorites are stored locally in the browser (`localStorage`), preventing private commands, credentials, or internal URLs from ever leaving your machine.
+
+---
+
+## 🎯 How to Use It (Shortest Path to Seeing It Work)
+
+1. **Search**: Press <kbd>⌘ + K</kbd> (or <kbd>Ctrl + K</kbd>) and type `docker` or `undo`. The fuzzy ranking engine instantly surfaces relevant commands.
+2. **Navigate & Copy**: Use the <kbd>↑</kbd> and <kbd>↓</kbd> arrow keys to highlight a command, then hit <kbd>↵ Enter</kbd> to copy it to your clipboard.
+3. **Live Parameter Substitution**: In the detail/inspector pane, change any `<placeholder>` argument (e.g., replace `<container>` with `my-web-api`). The command preview updates in real time with copy-ready syntax.
+4. **Switch Workspaces**: Press <kbd>⌘ + M</kbd> to toggle between the **Zed / Helix Terminal TUI** and the **Linear 3-Pane** workspace.
+5. **Toggle Theme**: Press <kbd>⌘ + T</kbd> to switch between Dark mode and high-contrast Light mode.
+6. **Filter Favorites**: Press <kbd>⌘ + P</kbd> on any snippet to toggle its favorite star, then click `[★ FAVS]` in the category bar to view only pinned commands.
+
+---
+
+## ⚠️ What It Does Not Do (Known Limits & Deliberate Omissions)
+
+Documenting what the application does *not* do distinguishes deliberate architectural boundaries from oversights:
+
+1. **No Remote Cloud Sync**: Snippets are stored in browser `localStorage`. There is currently no multi-device cloud synchronization or user authentication; clearing your browser cache resets to the default starter snippets unless manually exported.
+2. **No Interactive Terminal Execution (`exec`)**: CommandVault is an authoring, documentation, and clipboard tool. It does not spawn subshells or run commands directly on the host machine for security reasons.
+3. **Single Selection Only**: Bulk operations (multi-select deletion, batch category re-tagging) are not supported in the current interface.
+4. **No Git Versioning of Snippet History**: Editing a snippet overwrites its previous content in `localStorage` without a rollback revision history.
+
+---
+
+## 🏗️ Architecture & Contributing
+
+For a deep dive into the code layout, file rationale, instructions on how to add new features without breaking existing behavior, and notes on fragile areas (such as CSS height constraint traps), refer to the companion guide:
+
+👉 **[Read the Contributor & Architecture Guide (`CONTRIBUTING.md`)](./CONTRIBUTING.md)**
