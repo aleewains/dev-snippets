@@ -8,6 +8,8 @@ export type SnippetCategory =
   | 'sql'
   | 'custom';
 
+export type ViewMode = 'tui' | 'linear';
+
 export interface SnippetPlaceholder {
   key: string;
   label: string;
@@ -33,3 +35,4 @@ export interface FilterState {
   activeCategory: SnippetCategory;
   onlyPinned: boolean;
 }
+
